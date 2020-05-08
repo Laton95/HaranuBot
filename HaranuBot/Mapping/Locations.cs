@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace HaranuBot.Mapping
 {
@@ -65,6 +66,12 @@ namespace HaranuBot.Mapping
         public static int GetCount()
         {
             return LocationsList.Count;
+        }
+
+        public static KeyValuePair<string, Location> GetRandomLocation(Random random)
+        {
+            var maps = LocationsList.Where(l => l.Value.Map == "gielinor").ToList();
+            return maps[random.Next(maps.Count)];
         }
     }
 }

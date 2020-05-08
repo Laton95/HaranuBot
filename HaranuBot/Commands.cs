@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using HaranuBot.Artwork;
 using HaranuBot.Currency;
 using HaranuBot.Mapping;
 using HaranuBot.Quoting;
@@ -255,21 +256,128 @@ namespace HaranuBot
             }
             else
             {
+                if (int.TryParse(args.Last(), out int index))
+                {
+                    string name = args.BuildName(0, args.Length - 2).ToLower(); 
+
+                    try
+                    {
+                        await ReplyAsync(Quotes.GetQuote(name, index).GetFormattedQuote());
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        await ReplyAsync(string.Format("{0} has no quote at index {1}.", name.ToTitleCase(), index));
+                    }                 
+                }
+                else
+                {
+                    string name = args.BuildName().ToLower();
+
+                    List<Quote> quotes = Quotes.GetCharacterQuotes(name);
+                    if (quotes.Count > 0)
+                    {
+                        Quote quote = quotes[random.Next(quotes.Count)];
+                        if (quote != null)
+                        {
+                            await ReplyAsync(quote.GetFormattedQuote());
+                        }
+                    }
+                    else
+                    {
+                        await ReplyAsync(string.Format("{0} has no quotes.", name.ToTitleCase()));
+                    }
+                }
+            }
+        }
+
+        [Command("art"), Summary("Art commands")]
+        public async Task ArtCommands(params string[] args)
+        {
+            if (args.Length == 0)
+            {
+                await ReplyAsync(Arts.GetRandomArt(random).GetFormattedArt());
+            }
+            else if (args[0] == "add")
+            {
+                if (args.Length > 2)
+                {
+                    string name = args.BuildName(1, args.Length - 2).ToLower();
+                    string url = args[args.Length - 1];
+                    Art art = new Art(name, url);
+                    Arts.AddArt(art);
+                    await ReplyAsync("Added art.");
+                }
+                else
+                {
+                    await ReplyAsync("Please say which artist made this " + Context.User.Mention);
+                }
+            }
+            else if (args[0] == "count")
+            {
+                await ReplyAsync(string.Format("There are {0} arts stored.", Arts.GetArtCount()));
+            }
+            else if (args[0] == "remove")
+            {
+                string name = args.BuildName(1, args.Length - 2).ToLower();
+                int index = int.Parse(args[args.Length - 1]) - 1;
+
+                try
+                {
+                    Art art = Arts.GetArt(name, index);
+                    Arts.RemoveArt(name, index);
+                    Arts.SaveArts();
+                    await ReplyAsync(string.Format("Art removed from {0}: \"{1}\"", name, art.URL));
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    await ReplyAsync("Invalid art number.");
+                }
+            }
+            else
+            {
                 string name = args.BuildName().ToLower();
 
-                List<Quote> quotes = Quotes.GetCharacterQuotes(name);
-                if (quotes.Count > 0)
+                List<Art> arts = Arts.GetArtistArts(name);
+                if (arts.Count > 0)
                 {
-                    Quote quote = quotes[random.Next(quotes.Count)];
-                    if (quote != null)
+                    Art art = arts[random.Next(arts.Count)];
+                    if (art != null)
                     {
-                        await ReplyAsync(quote.GetFormattedQuote());
+                        await ReplyAsync(art.GetFormattedArt());
                     }
                 }
                 else
                 {
-                    await ReplyAsync(string.Format("{0} has no quotes.", name.ToTitleCase()));
+                    await ReplyAsync(string.Format("{0} has no arts.", name.ToTitleCase()));
                 }
+            }
+        }
+
+        [Command("meme"), Summary("Meme commands")]
+        public async Task MemeCommands(params string[] args)
+        {
+            if (args.Length == 0)
+            {
+                await ReplyAsync(Memes.GetRandomMeme(random).GetFormattedUrl());
+            }
+            else if (args[0] == "add")
+            {
+                string url = args[1];
+                Meme meme = new Meme(url);
+                Memes.AddMeme(meme);
+                await ReplyAsync("Added meme.");
+            }
+            else if (args[0] == "count")
+            {
+                await ReplyAsync(string.Format("There are {0} memes stored.", Memes.GetMemeCount()));
+            }
+            else if (args[0] == "remove")
+            {
+                string url = args[1];
+
+                Memes.RemoveMeme(url);
+                Memes.SaveMemes();
+                await ReplyAsync(string.Format("Meme removed"));
             }
         }
 
@@ -299,6 +407,17 @@ namespace HaranuBot
                 else
                 {
                     await ReplyAsync("No location with name: " + args.BuildName().ToTitleCase());
+                }
+            }
+            else
+            {
+                var location = Locations.GetRandomLocation(random);
+                MapImaging.CreateMap(location.Value);
+                await Context.Channel.SendMessageAsync(location.Key.ToTitleCase());
+                await Context.Channel.SendFileAsync(MapImaging.imageFile);
+                if (location.Value.Detail != null)
+                {
+                    await Context.Channel.SendMessageAsync(location.Value.Detail);
                 }
             }
         }
@@ -411,6 +530,16 @@ namespace HaranuBot
             String rollOutput = string.Format("{0}|+{1}|++{2}|-{3}|--{4}", rolls.NormalRoll, rolls.AdvantageRoll, rolls.GreatAdvantageRoll, rolls.DisadvantageRoll, rolls.GreatDisadvantageRoll);
 
             await ReplyAsync(Context.User.Mention + ", you rolled: " + diceRolled.ToString() + Environment.NewLine + rollOutput);
+        }
+
+        [Command("setname")]
+        public async Task Test(string name)
+        {
+            var guild = Context.Guild;
+            var user = guild.GetUser(Context.Client.CurrentUser.Id);
+            await user.ModifyAsync(x => {
+                x.Nickname = name;
+            });
         }
 
         [Command("help"), Summary("List avaliable commands.")]

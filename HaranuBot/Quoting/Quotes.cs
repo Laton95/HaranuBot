@@ -19,10 +19,6 @@ namespace HaranuBot.Quoting
                 {
                     LoadQuotes();
                 }
-                else if (fileDate < File.GetLastWriteTimeUtc(quoteJson))
-                {
-                    LoadQuotes();
-                }
 
                 return quoteList;
             }
@@ -80,46 +76,63 @@ namespace HaranuBot.Quoting
                     file.Write(o.ToString());
                 }            
             }
+            fileDate = File.GetLastWriteTimeUtc(quoteJson);
+        }
+
+        public static void RefreshQuotes()
+        {
+            if (fileDate < File.GetLastWriteTimeUtc(quoteJson))
+            {
+                LoadQuotes();
+            }
         }
 
         public static Quote GetRandomQuote(Random random)
         {
+            RefreshQuotes();
             return QuoteList[random.Next(QuoteList.Count)];
         }
 
         public static List<Quote> GetCharacterQuotes(string character)
         {
+            RefreshQuotes();
             return QuoteList.Where(q => q.Character == character).ToList();
         }
 
         public static bool QuoteExists(Quote quote)
         {
+            RefreshQuotes();
             return QuoteList.Contains(quote);
         }
 
         public static int GetQuoteCount()
         {
+            RefreshQuotes();
             return QuoteList.Count;
         }
 
         public static void AddQuote(Quote quote)
         {
+            RefreshQuotes();
             QuoteList.Add(quote);
             SaveQuotes();
         }
 
         public static void RemoveQuote(string characterName, int index)
         {
+            RefreshQuotes();
             QuoteList.Remove(QuoteList.Where(q => q.Character == characterName).ToList()[index]);
         }
 
         public static Quote GetQuote(string characterName, int index)
         {
+            RefreshQuotes();
             return QuoteList.Where(q => q.Character == characterName).ToList()[index];
         }
 
         public static List<string> GetCharacters()
         {
+            RefreshQuotes();
             return QuoteList.Select(q => q.Character).Distinct().ToList();
         }
     }
