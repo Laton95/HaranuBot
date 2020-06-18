@@ -58,6 +58,27 @@ namespace HaranuBot.Mapping
             //}
         }
 
+        public static List<KeyValuePair<string, Location>> CheckLocations()
+        {
+            List<KeyValuePair<string, Location>> badLocations = new List<KeyValuePair<string, Location>>();
+
+            foreach (KeyValuePair<string, Location> location in LocationsList)
+            {
+                Console.WriteLine(location.Key);
+                try
+                {
+                    MapImaging.CreateMap(location.Value);
+                }
+                catch (Exception)
+                {
+                    badLocations.Add(location);
+                }
+                
+            }
+
+            return badLocations;
+        }
+
         public static Location GetLocation(string name)
         {   
             return LocationsList.GetValueOrDefault(name.ToLower(), null);

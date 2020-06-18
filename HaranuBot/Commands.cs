@@ -258,7 +258,9 @@ namespace HaranuBot
             {
                 if (int.TryParse(args.Last(), out int index))
                 {
-                    string name = args.BuildName(0, args.Length - 2).ToLower(); 
+                    string name = args.BuildName(0, args.Length - 2).ToLower();
+
+                    index -= 1;
 
                     try
                     {
